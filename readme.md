@@ -1,5 +1,8 @@
 <img src="imgs/nnInteractive_header_white.png">
 
+## There seems to be an issue with nninteractive and torch 2.9.0 where inference runs OOM. Please use torch 2.8.0 or lower for the time being! (torch 2.9.0 seems to have some larger issues with 3D Convs, see [here](https://github.com/pytorch/pytorch/issues/166122))
+
+
 # Python backend for `nnInteractive: Redefining 3D Promptable Segmentation`
 
 This repository provides the official Python backend for `nnInteractive`, a state-of-the-art framework for 3D promptable segmentation. It is designed for seamless integration into Python-based workflows—ideal for researchers, developers, and power users working directly with code.
@@ -130,6 +133,10 @@ model_path = os.path.join(DOWNLOAD_DIR, MODEL_NAME)
 session.initialize_from_trained_model_folder(model_path)
 
 # --- Load Input Image (Example with SimpleITK) ---
+# DO NOT preprocess the image in any way. Give it to nnInteractive as it is! DO NOT apply level window, DO NOT normalize 
+# intensities and never ever convert an image with higher precision (float32, uint16, etc) to uint8!
+# The ONLY instance where some preprocesing makes sense is if your original image is too large to be reasonably used. 
+# This may be the case, for example, for some microCT images. In this case you can consider downsampling.
 input_image = sitk.ReadImage("FILENAME")
 img = sitk.GetArrayFromImage(input_image)[None]  # Ensure shape (1, x, y, z)
 
@@ -227,6 +234,26 @@ Link: [![arXiv](https://img.shields.io/badge/arXiv-2503.08373-b31b1b.svg)](https
 
 # License
 Note that while this repository is available under Apache-2.0 license (see [LICENSE](./LICENSE)), the [model checkpoint](https://huggingface.co/nnInteractive/nnInteractive) is `Creative Commons Attribution Non Commercial Share Alike 4.0`! 
+
+# Changelog
+
+### 1.1.2 - 2025-08-02
+
+- Fixed a bug where `pin_memory` was set to `True` even though no CUDA devices were present (this broke CPU support)
+- ✅ API compatible all the way back to 1.0.1
+
+### 1.1.1 - 2025-08-01
+
+- We now detect whether linux kernel 6.11 is used and disable pin_memory in that case. See also [here](https://github.com/MIC-DKFZ/nnInteractive/issues/18)
+- ✅ API compatible with 1.0.1 and 1.1.0
+
+### 1.1.0 - 2025-08-01
+
+- Reworked inference code. It's now well-structured and easier to follow.
+- Fixed bugs that 
+  - sometimes caused blocky predictions
+  - may cause failure to update segmentation map if changes were minor and AutoZoom was triggered
+- ✅ API compatible with 1.0.1
 
 ## Acknowledgments
 
